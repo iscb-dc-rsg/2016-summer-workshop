@@ -1,0 +1,184 @@
+---
+title: "Co-expression network analysis using RNA-Seq data "
+author: V. Keith Hughitt
+date: "June 15, 2016"
+output:
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+  md_document:
+    variant: markdown_github
+---
+
+```{r knitr_settings, include=FALSE, echo=FALSE}
+library('knitr')
+opts_chunk$set(error=FALSE)
+options(digits=4)
+
+# Make sure results are reproducible
+set.seed(1)
+```
+
+Introduction
+============
+
+### Overview
+
+Here are the main steps we are going to cover in this tutorial:
+
+1. Data preparation
+	- low-count filtering
+	- log-transforming data
+2. Differential expression analysis
+	- filtering out non-differentially-expressed genes
+3. Co-expression network construction
+4. ...
+
+Things which are _not_ covered in this tutorial, but warrant consideration:
+
+1. Sample quality assurance (FastQC, PCA plots, etc.)
+2. Batch adjustment (ComBat/sva/RUVSeq)
+3. Normalization (Quantile normalization/TMM/etc.)
+4. Parameter Optimization (Short solution: try out a few different ways of 
+   preparing data, and measure network module enrichment each time.)
+
+### Installation and Usage
+
+### Dataset
+
+
+Setup
+=====
+
+First, let's load the libraries that we will be using for this analysis. These
+can all be installed using either `install.packages()`, or in some cases,
+`biocLite()`.
+
+```{r}
+library('gplots')
+library('ggplot2')
+library('knitr')
+library('reshape')
+library('RColorBrewer')
+library('WGCNA')
+```
+
+Now, let's load the sample metadata file from the `data/` directory.
+
+```{r load_metadata, results='asis'}
+samples <- read.csv('../data/sample_metadata.csv')
+kable(samples)
+```
+
+Next, we will load our RNA-Seq read counts.
+
+```{r load_data}
+raw_counts <- read.csv('../data/count_table.csv', row.names=1)
+head(raw_counts)
+dim(raw_counts)
+```
+
+For gene annotations, we can use the Bioconductor `Homo.sapiens` OrganismDb
+package.  This meta-package combines several Human-specific annotation
+packages, providing gene- and transcript-level details.
+
+```{r}
+library('Homo.sapiens')
+```
+
+OrganismDb packages can be queried in a manner similar to querying a database.
+You have to specify one or more gene identifiers ('keys'), along with the type
+of the identifier ('key type'), and one or more fields that you are interested
+in querying.
+
+```{r}
+keytypes(Homo.sapiens)
+columns(Homo.sapiens)
+```
+
+To query the package, you use the `select()` function, e.g.:
+
+```{r}
+# Example query
+gene_ids <- head(keys(Homo.sapiens, keytype='ENSEMBL'), 2)
+select(Homo.sapiens, keytype='ENSEMBL', keys=gene_ids, 
+	   columns=c('ALIAS', 'TXCHROM', 'TXSTART', 'TXEND'))
+```
+
+
+Data Preparation
+================
+
+### Sample check
+
+First, it is always wise to check the quality of your samples before continuing
+with an analysis like this. There are many such checks that one can (and should)
+perform, starting at the level of read quality (e.g. FastQC).
+
+Here, we will just do a quick check using a sample-correlation heatmap.
+
+```{r sample_heatmap}
+# add a colorbar along the heatmap with sample condition
+num_conditions <- nlevels(samples$condition)
+pal <- colorRampPalette(brewer.pal(num_conditions, "Set1"))(num_conditions)
+cond_colors <- pal[as.integer(samples$condition)]
+
+#num_batches <- nlevels(samples$batch)
+#pal <- colorRampPalette(brewer.pal(num_batches, "Set2"))(num_batches)
+#batch_colors <- pal[as.integer(samples$batch)]
+
+heatmap.2(cor(raw_counts), RowSideColors=cond_colors,
+		  #ColSideColors=batch_colors,
+		  trace='none', main='Sample correlations (raw)')
+```
+
+### Low count filtering
+
+Now that we are satisfied with the quality of our samples, we will want to
+filter our data to keep only the genes which will be informative during
+differential expression analysis and network construction.
+
+```{r}
+# Remove all rows with less than n counts across all samples, where n=#samples
+low_count_mask <- rowSums(raw_counts) < ncol(raw_counts)
+
+sprintf("Removing %d low-count genes (%d remaining).", sum(low_count_mask), 
+		sum(!low_count_mask))
+```
+
+### Log2 transformation
+
+Most of the methods developed for co-expression network analysis and network 
+inference were written for use with microarray data, including WGCNA!
+
+Attempting to apply a method such as this to discrete-count RNA-Seq data
+will not work out well.
+
+There are a number of methods for working around this, in effect, making 
+RNA-Seq data "look" more like microarray data, but the simplest thing is just
+to _log_ the data. This will transform our discrete, over-dispersed counts
+to a more Poisson-like continuous distribution.
+
+```{r}
+log_counts <- log2(raw_counts + 1)
+```
+
+Let's see how things look after logging the data.
+
+```{r sample_density_plot}
+x = melt(as.matrix(log_counts))
+
+colnames(x) = c('gene_id', 'sample', 'value')
+ggplot(x, aes(x=value, color=sample)) + geom_density()
+```
+
+```{r log2_sample_heatmap}
+heatmap.2(cor(log_counts), RowSideColors=cond_colors,
+		  trace='none', main='Sample correlations (log2-transformed)')
+```
+
+As you can see, after the low-count filtering and log-transformation, the 
+samples within each condition are starting to behave better.
+
