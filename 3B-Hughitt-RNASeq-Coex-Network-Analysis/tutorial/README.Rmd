@@ -114,7 +114,6 @@ select(Homo.sapiens, keytype='ENSEMBL', keys=gene_ids,
 	   columns=c('ALIAS', 'TXCHROM', 'TXSTART', 'TXEND'))
 ```
 
-
 Data Preparation
 ================
 
