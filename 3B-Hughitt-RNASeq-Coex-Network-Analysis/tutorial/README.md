@@ -33,29 +33,24 @@ Here are the main steps we are going to cover in this tutorial:
 Things which are *not* covered in-depth in this tutorial, but warrant consideration:
 
 1.  Sample quality assurance (FastQC, PCA plots, etc.)
+    -   [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+    -   [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
 
--   [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
--   [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
+2.  Batch adjustment (ComBat/sva/RUVSeq)
+    -   [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
+    -   [The sva package for removing batch effects and other unwanted variation in high-throughput experiments (Leek, Johnson, Parker, et al., 2012)](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
 
-1.  Batch adjustment (ComBat/sva/RUVSeq)
+3.  Normalization (Quantile normalization/TMM/etc.)
+    -   [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments (Bullard, Purdom, Hansen, et al., 2010)](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
+    -   [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis (Dillies, Rau, Aubert, et al., 2012)](http://bib.oxfordjournals.org/content/14/6/671.short)
 
--   [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
--   [The sva package for removing batch effects and other unwanted variation in high-throughput experiments (Leek, Johnson, Parker, Jaffe, and Storey, 2012)](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
+4.  A detailed discussion of the pros and cons of various approaches for differential expression analysis of RNA-Seq data.
+    -   [Comparison of software packages for detecting differential expression in RNA-seq studies (Seyednasrollah, Laiho, and Elo, 2013)](http://bib.oxfordjournals.org/content/16/1/59.short)
+    -   [A comparison of methods for differential expression analysis of RNA-seq data (Soneson and Delorenzi, 2013)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
 
-1.  Normalization (Quantile normalization/TMM/etc.)
-
--   [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments (Bullard, Purdom, Hansen, and Dudoit, 2010)](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
--   [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis (Dillies, Rau, Aubert, Hennequet-Antier, Jeanmougin, Servant, Keime, Marot, Castel, Estelle, Guernec, Jagla, Jouneau, Laloe, Gall, Schaeffer, Crom, Guedj, and Jaffrezic, 2012)](http://bib.oxfordjournals.org/content/14/6/671.short)
-
-1.  A detailed discussion of the pros and cons of various approaches for differential expression analysis of RNA-Seq data.
-
--   [Comparison of software packages for detecting differential expression in RNA-seq studies (Seyednasrollah, Laiho, and Elo, 2013)](http://bib.oxfordjournals.org/content/16/1/59.short)
--   [A comparison of methods for differential expression analysis of RNA-seq data (Soneson and Delorenzi, 2013)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
-
-1.  Parameter Optimization (Short solution: try out a few different ways of preparing data, and measure network module enrichment each time.)
-2.  R programming.
-
--   [Coursera - R programming](https://www.coursera.org/learn/r-programming)
+5.  Parameter Optimization (Short solution: try out a few different ways of preparing data, and measure network module enrichment each time.)
+6.  R programming.
+    -   [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
@@ -412,9 +407,9 @@ rm(sim_matrix)
 gc()
 ```
 
-    ##            used  (Mb) gc trigger  (Mb) max used  (Mb)
-    ## Ncells  4399455 235.0    6861544 366.5  6861544 366.5
-    ## Vcells 15771746 120.4   76565454 584.2 91418383 697.5
+    ##            used  (Mb) gc trigger  (Mb)  max used  (Mb)
+    ## Ncells  4405528 235.3    6861544 366.5   6861544 366.5
+    ## Vcells 15772993 120.4   76467628 583.5 101664953 775.7
 
 ``` r
 # Convert to matrix

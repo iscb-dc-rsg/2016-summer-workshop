@@ -37,22 +37,22 @@ Things which are _not_ covered in-depth in this tutorial, but warrant
 consideration: 
 
 1. Sample quality assurance (FastQC, PCA plots, etc.)
-   - [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
-   - [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
+    - [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+    - [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
 2. Batch adjustment (ComBat/sva/RUVSeq)
-   - [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
-   - [The sva package for removing batch effects and other unwanted variation in high-throughput experiments `r citep('10.1093/bioinformatics/bts034')`](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
+    - [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
+    - [The sva package for removing batch effects and other unwanted variation in high-throughput experiments `r citep('10.1093/bioinformatics/bts034')`](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
 3. Normalization (Quantile normalization/TMM/etc.)
-   - [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments `r citep('10.1186/1471-2105-11-94')`](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
-   - [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis `r citep('10.1093/bib/bbs046')`](http://bib.oxfordjournals.org/content/14/6/671.short)
+    - [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments `r citep('10.1186/1471-2105-11-94')`](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
+    - [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis `r citep('10.1093/bib/bbs046')`](http://bib.oxfordjournals.org/content/14/6/671.short)
 4. A detailed discussion of the pros and cons of various approaches for
    differential expression analysis of RNA-Seq data.
-   - [Comparison of software packages for detecting differential expression in RNA-seq studies `r citep('10.1093/bib/bbt086')`](http://bib.oxfordjournals.org/content/16/1/59.short)
-   - [A comparison of methods for differential expression analysis of RNA-seq data `r citep('10.1186/1471-2105-14-91')`](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
+    - [Comparison of software packages for detecting differential expression in RNA-seq studies `r citep('10.1093/bib/bbt086')`](http://bib.oxfordjournals.org/content/16/1/59.short)
+    - [A comparison of methods for differential expression analysis of RNA-seq data `r citep('10.1186/1471-2105-14-91')`](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
 5. Parameter Optimization (Short solution: try out a few different ways of 
    preparing data, and measure network module enrichment each time.)
 6. R programming.
-   - [Coursera - R programming](https://www.coursera.org/learn/r-programming)
+    - [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
