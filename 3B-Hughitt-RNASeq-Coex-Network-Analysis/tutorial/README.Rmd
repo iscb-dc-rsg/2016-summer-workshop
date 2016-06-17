@@ -32,6 +32,8 @@ Here are the main steps we are going to cover in this tutorial:
 2. Differential expression analysis
 	- filtering out non-differentially-expressed genes
 3. Co-expression network construction
+4. Detection of co-expression modules
+4. Exporting a network for external visualization
 
 Things which are _not_ covered in-depth in this tutorial, but warrant
 consideration: 
@@ -261,6 +263,35 @@ mid-correlation, mutual information, etc.
 Here, we will use a metric that I have created which combines some
 of the benefits from both Pearson correlation and Euclidean Distance.
 
+For a data matrix $X$ with observations as columns (samples) and features for
+rows (genes), the feature-feature similarity matrix $S$ is computed as:
+
+$$
+S = sign(cor(X)) \times \frac{|cor(X)| + (1 - \frac{log(dist(X) + 1)}{max(log(dist(X) + 1))})}{2}
+$$
+
+Where the `cor` returns the Pearson correlation matrix for the input matrix,
+and the `dist` function returns the Euclidean distance matrix for the input
+matrix.
+
+The LHS of the equation is simply the sign of the correlation function, which
+serves to preserve the sign of the interaction. The RHS combines the Pearson
+correlation and the log inverse Euclidean distance with equal weights.
+
+The result is a number in the range $[-1,1]$, where values close to $-1$
+indicate a strong negative correlation and values close to $1$ indicate a
+strong positive corelation.
+
+While the Pearson correlation and Euclidean distance each contribute equally in
+the above equation, one could also assign tuning parameters to each of the
+metrics to allow for unequal contributions, e.g.:
+
+$$
+S = sign(cor(X)) \times (\alpha |cor(X)| + \beta (1 - \frac{log(dist(X) + 1)}{max(log(dist(X) + 1))}))
+$$
+
+Where $\alpha$ and $\beta$ each range from $[0,1]$ and sum to 1.
+
 ```{r cor_dist}
 #'
 #' Similarity measure which combines elements from Pearson correlation and
@@ -463,7 +494,7 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
     # Remove edges with weights lower than the cutoff
     adj_mat[abs(adj_mat) < threshold] <- 0
 
-    # Drop any genes with no edges (TODO: Make optional?)
+    # Drop any genes with no edges (TODO: Make optional)
     orphaned <- (colSums(adj_mat) == 0)
     adj_mat <- adj_mat[!orphaned, !orphaned]
 
@@ -509,12 +540,6 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
         }
     }
 
-    # TODO 2014/06/14
-    # Add support for setting edge attributes...
-    # Convert matrix of edge annotations to a list of edge pairs and values
-    #x <- as.data.frame(as.table(diff))
-    #E(gD)[as.character(dataSet.ext$V1) %--% as.character(dataSet.ext$V2)]$weight <- as.numeric(dataSet.ext$V3)
-    #E(gD)[as.character(dataSet.ext$V1) %--% as.character(dataSet.ext$V2)]$similarity <- as.numeric(dataSet.ext$V4)
     edge_correlation_negative <- c()
 
     # neg_correlations[edge_list]
@@ -525,8 +550,6 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
         to   <- edge_list[i, 2]    
     }
     
-    # Apply threshold
-
     # Save graph to a file
     write.graph(g, filename, format='graphml')
 
