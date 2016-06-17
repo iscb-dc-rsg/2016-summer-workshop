@@ -10,7 +10,8 @@ Brief description on presentation...
 
 - **Presentation**: [http://khughitt.github.io/2016-iscb-dc-rsg-workshop-presentation/](http://khughitt.github.io/2016-iscb-dc-rsg-workshop-presentation/#1) 
 - **Tutorial**: [tutorial/README.md](https://github.com/iscb-dc-rsg/2016-summer-workshop/blob/master/3B-Hughitt-RNASeq-Coex-Network-Analysis/tutorial/README.md)
-- **Data** ([Fernandes et al, 2016](http://mbio.asm.org/content/7/3/e00027-16.abstract)):
+- **Data**:
+    - **Source**: [Fernandes et al, 2016](http://mbio.asm.org/content/7/3/e00027-16.abstract)
     - [data/count_table.csv](data/count_table.csv)
     - [data/sample_metadata.csv](data/sample_metadata.csv)
 
