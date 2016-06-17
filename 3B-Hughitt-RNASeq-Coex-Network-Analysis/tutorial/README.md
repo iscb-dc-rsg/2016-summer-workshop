@@ -1,3 +1,19 @@
+-   [Introduction](#introduction)
+    -   [Overview](#overview)
+    -   [Installation and Usage](#installation-and-usage)
+    -   [Dataset](#dataset)
+-   [Setup](#setup)
+-   [Data Preparation](#data-preparation)
+    -   [Sample check](#sample-check)
+    -   [Low count filtering](#low-count-filtering)
+    -   [Log2 transformation](#log2-transformation)
+    -   [Remove non differentially-expressed genes](#remove-non-differentially-expressed-genes)
+    -   [Co-expression network construction](#co-expression-network-construction)
+    -   [Co-expression module detection](#co-expression-module-detection)
+    -   [Exporting the network](#exporting-the-network)
+-   [References](#references)
+-   [Version Information](#version-information)
+
 Introduction
 ============
 
@@ -13,16 +29,28 @@ Here are the main steps we are going to cover in this tutorial:
     -   filtering out non-differentially-expressed genes
 
 3.  Co-expression network construction
-4.  ...
 
-Things which are *not* covered in-depth in this tutorial:
+Things which are *not* covered in-depth in this tutorial, but warrant consideration:
 
 1.  Sample quality assurance (FastQC, PCA plots, etc.)
+    -   [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+    -   [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
+
 2.  Batch adjustment (ComBat/sva/RUVSeq)
+    -   [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
+    -   [The sva package for removing batch effects and other unwanted variation in high-throughput experiments (Leek, Johnson, Parker, et al., 2012)](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
+
 3.  Normalization (Quantile normalization/TMM/etc.)
+    -   [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments (Bullard, Purdom, Hansen, et al., 2010)](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
+    -   [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis (Dillies, Rau, Aubert, et al., 2012)](http://bib.oxfordjournals.org/content/14/6/671.short)
+
 4.  A detailed discussion of the pros and cons of various approaches for differential expression analysis of RNA-Seq data.
+    -   [Comparison of software packages for detecting differential expression in RNA-seq studies (Seyednasrollah, Laiho, and Elo, 2013)](http://bib.oxfordjournals.org/content/16/1/59.short)
+    -   [A comparison of methods for differential expression analysis of RNA-seq data (Soneson and Delorenzi, 2013)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
+
 5.  Parameter Optimization (Short solution: try out a few different ways of preparing data, and measure network module enrichment each time.)
 6.  R programming.
+    -   [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
@@ -35,71 +63,16 @@ First, let's load the libraries that we will be using for this analysis. These c
 
 ``` r
 library('gplots')
-```
-
-    ## 
-    ## Attaching package: 'gplots'
-
-    ## The following object is masked from 'package:stats':
-    ## 
-    ##     lowess
-
-``` r
 library('ggplot2')
 library('knitr')
 library('limma')
 library('reshape2')
 library('RColorBrewer')
 library('WGCNA')
+
+# Make sure results are reproducible
+set.seed(1)
 ```
-
-    ## Loading required package: dynamicTreeCut
-
-    ## Loading required package: fastcluster
-
-    ## 
-    ## Attaching package: 'fastcluster'
-
-    ## The following object is masked from 'package:stats':
-    ## 
-    ##     hclust
-
-    ## 
-
-    ## ==========================================================================
-    ## *
-    ## *  Package WGCNA 1.51 loaded.
-    ## *
-    ## *    Important note: It appears that your system supports multi-threading,
-    ## *    but it is not enabled within WGCNA in R. 
-    ## *    To allow multi-threading within WGCNA with all available cores, use 
-    ## *
-    ## *          allowWGCNAThreads()
-    ## *
-    ## *    within R. Use disableWGCNAThreads() to disable threading if necessary.
-    ## *    Alternatively, set the following environment variable on your system:
-    ## *
-    ## *          ALLOW_WGCNA_THREADS=<number_of_processors>
-    ## *
-    ## *    for example 
-    ## *
-    ## *          ALLOW_WGCNA_THREADS=4
-    ## *
-    ## *    To set the environment variable in linux bash shell, type 
-    ## *
-    ## *           export ALLOW_WGCNA_THREADS=4
-    ## *
-    ## *     before running R. Other operating systems or shells will
-    ## *     have a similar command to achieve the same aim.
-    ## *
-    ## ==========================================================================
-
-    ## 
-    ## Attaching package: 'WGCNA'
-
-    ## The following object is masked from 'package:stats':
-    ## 
-    ##     cor
 
 Now, let's load the sample metadata file from the `data/` directory.
 
@@ -174,79 +147,6 @@ For gene annotations, we can use the Bioconductor `Homo.sapiens` OrganismDb pack
 ``` r
 library('Homo.sapiens')
 ```
-
-    ## Loading required package: AnnotationDbi
-
-    ## Loading required package: stats4
-
-    ## Loading required package: BiocGenerics
-
-    ## Loading required package: parallel
-
-    ## 
-    ## Attaching package: 'BiocGenerics'
-
-    ## The following objects are masked from 'package:parallel':
-    ## 
-    ##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    ##     clusterExport, clusterMap, parApply, parCapply, parLapply,
-    ##     parLapplyLB, parRapply, parSapply, parSapplyLB
-
-    ## The following object is masked from 'package:limma':
-    ## 
-    ##     plotMA
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     IQR, mad, xtabs
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     anyDuplicated, append, as.data.frame, cbind, colnames,
-    ##     do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    ##     grepl, intersect, is.unsorted, lapply, lengths, Map, mapply,
-    ##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-    ##     Position, rank, rbind, Reduce, rownames, sapply, setdiff,
-    ##     sort, table, tapply, union, unique, unsplit
-
-    ## Loading required package: Biobase
-
-    ## Welcome to Bioconductor
-    ## 
-    ##     Vignettes contain introductory material; view with
-    ##     'browseVignettes()'. To cite Bioconductor, see
-    ##     'citation("Biobase")', and for packages 'citation("pkgname")'.
-
-    ## Loading required package: IRanges
-
-    ## Loading required package: S4Vectors
-
-    ## 
-    ## Attaching package: 'S4Vectors'
-
-    ## The following object is masked from 'package:gplots':
-    ## 
-    ##     space
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     colMeans, colSums, expand.grid, rowMeans, rowSums
-
-    ## Loading required package: OrganismDbi
-
-    ## Loading required package: GenomicFeatures
-
-    ## Loading required package: GenomeInfoDb
-
-    ## Loading required package: GenomicRanges
-
-    ## Loading required package: GO.db
-
-    ## Loading required package: org.Hs.eg.db
-
-    ## 
-
-    ## Loading required package: TxDb.Hsapiens.UCSC.hg19.knownGene
 
 OrganismDb packages can be queried in a manner similar to querying a database. You have to specify one or more gene identifiers ('keys'), along with the type of the identifier ('key type'), and one or more fields that you are interested in querying.
 
@@ -507,9 +407,9 @@ rm(sim_matrix)
 gc()
 ```
 
-    ##            used  (Mb) gc trigger  (Mb) max used  (Mb)
-    ## Ncells  4259372 227.5    6861544 366.5  6861544 366.5
-    ## Vcells 15594984 119.0   51493936 392.9 71855893 548.3
+    ##            used  (Mb) gc trigger  (Mb)  max used  (Mb)
+    ## Ncells  4405528 235.3    6861544 366.5   6861544 366.5
+    ## Vcells 15772993 120.4   76467628 583.5 101664953 775.7
 
 ``` r
 # Convert to matrix
@@ -741,29 +641,104 @@ g <- export_network_to_graphml(adj_matrix, filename='~/network.graphml',
                                threshold=0.4, nodeAttrDataFrame=gene_info)
 ```
 
-    ## 
-    ## Attaching package: 'igraph'
+References
+==========
 
-    ## The following object is masked from 'package:GenomicRanges':
-    ## 
-    ##     union
+\[1\] J. H. Bullard, E. Purdom, K. D. Hansen, et al. "Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments". In: *BMC Bioinformatics* 11.1 (2010), p. 94. DOI: 10.1186/1471-2105-11-94. &lt;URL: <http://dx.doi.org/10.1186/1471-2105-11-94>&gt;.
 
-    ## The following objects are masked from 'package:IRanges':
-    ## 
-    ##     simplify, union
+\[2\] M. Dillies, A. Rau, J. Aubert, et al. "A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis". In: *Briefings in Bioinformatics* 14.6 (Sep. 2012), pp. 671-683. DOI: 10.1093/bib/bbs046. &lt;URL: <http://dx.doi.org/10.1093/bib/bbs046>&gt;.
 
-    ## The following objects are masked from 'package:S4Vectors':
-    ## 
-    ##     compare, union
+\[3\] J. T. Leek, W. E. Johnson, H. S. Parker, et al. "The sva package for removing batch effects and other unwanted variation in high-throughput experiments". In: *Bioinformatics* 28.6 (Jan. 2012), pp. 882-883. DOI: 10.1093/bioinformatics/bts034. &lt;URL: <http://dx.doi.org/10.1093/bioinformatics/bts034>&gt;.
 
-    ## The following objects are masked from 'package:BiocGenerics':
-    ## 
-    ##     normalize, union
+\[4\] F. Seyednasrollah, A. Laiho and L. L. Elo. "Comparison of software packages for detecting differential expression in RNA-seq studies". In: *Briefings in Bioinformatics* 16.1 (Dec. 2013), pp. 59-70. DOI: 10.1093/bib/bbt086. &lt;URL: <http://dx.doi.org/10.1093/bib/bbt086>&gt;.
 
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     decompose, spectrum
+\[5\] C. Soneson and M. Delorenzi. "A comparison of methods for differential expression analysis of RNA-seq data". In: *BMC Bioinformatics* 14.1 (2013), p. 91. DOI: 10.1186/1471-2105-14-91. &lt;URL: <http://dx.doi.org/10.1186/1471-2105-14-91>&gt;.
 
-    ## The following object is masked from 'package:base':
+Version Information
+===================
+
+``` r
+sessionInfo()
+```
+
+    ## R version 3.3.0 (2016-05-03)
+    ## Platform: x86_64-pc-linux-gnu (64-bit)
+    ## Running under: Arch Linux
     ## 
-    ##     union
+    ## locale:
+    ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+    ##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+    ##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+    ##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+    ##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+    ## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+    ## 
+    ## attached base packages:
+    ## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+    ## [8] methods   base     
+    ## 
+    ## other attached packages:
+    ##  [1] igraph_1.0.1                           
+    ##  [2] Homo.sapiens_1.3.1                     
+    ##  [3] TxDb.Hsapiens.UCSC.hg19.knownGene_3.2.2
+    ##  [4] org.Hs.eg.db_3.3.0                     
+    ##  [5] GO.db_3.3.0                            
+    ##  [6] OrganismDbi_1.14.1                     
+    ##  [7] GenomicFeatures_1.24.2                 
+    ##  [8] GenomicRanges_1.24.0                   
+    ##  [9] GenomeInfoDb_1.8.1                     
+    ## [10] AnnotationDbi_1.34.2                   
+    ## [11] IRanges_2.6.0                          
+    ## [12] S4Vectors_0.10.0                       
+    ## [13] Biobase_2.32.0                         
+    ## [14] BiocGenerics_0.18.0                    
+    ## [15] WGCNA_1.51                             
+    ## [16] fastcluster_1.1.20                     
+    ## [17] dynamicTreeCut_1.63-1                  
+    ## [18] RColorBrewer_1.1-2                     
+    ## [19] reshape2_1.4.1                         
+    ## [20] limma_3.28.5                           
+    ## [21] ggplot2_2.1.0                          
+    ## [22] gplots_3.0.1                           
+    ## [23] knitcitations_1.0.7                    
+    ## [24] knitr_1.13.1                           
+    ## [25] rmarkdown_0.9.6                        
+    ## [26] nvimcom_0.9-16                         
+    ## [27] setwidth_1.0-4                         
+    ## [28] colorout_1.1-0                         
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##  [1] httr_1.1.0                 splines_3.3.0             
+    ##  [3] foreach_1.4.3              gtools_3.5.0              
+    ##  [5] Formula_1.2-1              highr_0.6                 
+    ##  [7] latticeExtra_0.6-28        RBGL_1.48.1               
+    ##  [9] Rsamtools_1.24.0           yaml_2.1.13               
+    ## [11] impute_1.46.0              RSQLite_1.0.0             
+    ## [13] lattice_0.20-33            chron_2.3-47              
+    ## [15] digest_0.6.9               XVector_0.12.0            
+    ## [17] RefManageR_0.10.13         colorspace_1.2-6          
+    ## [19] htmltools_0.3.5            preprocessCore_1.34.0     
+    ## [21] Matrix_1.2-6               plyr_1.8.3                
+    ## [23] XML_3.98-1.4               bibtex_0.4.0              
+    ## [25] biomaRt_2.28.0             zlibbioc_1.18.0           
+    ## [27] scales_0.4.0               gdata_2.17.0              
+    ## [29] BiocParallel_1.6.2         SummarizedExperiment_1.2.2
+    ## [31] nnet_7.3-12                survival_2.39-2           
+    ## [33] RJSONIO_1.3-0              magrittr_1.5              
+    ## [35] evaluate_0.9               doParallel_1.0.10         
+    ## [37] foreign_0.8-66             graph_1.50.0              
+    ## [39] BiocInstaller_1.22.2       tools_3.3.0               
+    ## [41] data.table_1.9.6           formatR_1.4               
+    ## [43] matrixStats_0.50.2         stringr_1.0.0             
+    ## [45] munsell_0.4.3              cluster_2.0.4             
+    ## [47] Biostrings_2.40.0          caTools_1.17.1            
+    ## [49] grid_3.3.0                 RCurl_1.95-4.8            
+    ## [51] iterators_1.0.8            labeling_0.3              
+    ## [53] bitops_1.0-6               gtable_0.2.0              
+    ## [55] codetools_0.2-14           DBI_0.4-1                 
+    ## [57] R6_2.1.2                   GenomicAlignments_1.8.0   
+    ## [59] gridExtra_2.2.1            lubridate_1.5.6           
+    ## [61] rtracklayer_1.32.0         Hmisc_3.17-4              
+    ## [63] KernSmooth_2.23-15         stringi_1.1.1             
+    ## [65] Rcpp_0.12.5                rpart_4.1-10              
+    ## [67] acepack_1.3-3.3

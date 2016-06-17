@@ -3,26 +3,20 @@ title: "Co-expression network analysis using RNA-Seq data "
 author: V. Keith Hughitt
 date: "June 15, 2016"
 output:
-  html_document:
-    theme: cosmo
-    toc: true
-    toc_float: true
-    number_sections: true
   md_document:
+    toc: true
     variant: markdown_github
 ---
 
 ```{r knitr_settings, include=FALSE, echo=FALSE}
 library('knitr')
+library('knitcitations')
 opts_chunk$set(fig.width=1080/96,
                fig.height=1080/96,
                fig.retina=1,
                dpi=96,
                error=FALSE)
 options(digits=4)
-
-# Make sure results are reproducible
-set.seed(1)
 ```
 
 Introduction
@@ -38,18 +32,27 @@ Here are the main steps we are going to cover in this tutorial:
 2. Differential expression analysis
 	- filtering out non-differentially-expressed genes
 3. Co-expression network construction
-4. ...
 
-Things which are _not_ covered in-depth in this tutorial:
+Things which are _not_ covered in-depth in this tutorial, but warrant
+consideration: 
 
 1. Sample quality assurance (FastQC, PCA plots, etc.)
+    - [FastQC homepage](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+    - [Bioconductor RNA-Seq workflow: Exploratory analysis and visualization](http://www.bioconductor.org/help/workflows/rnaseqGene/#exploratory-analysis-and-visualization)
 2. Batch adjustment (ComBat/sva/RUVSeq)
+    - [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
+    - [The sva package for removing batch effects and other unwanted variation in high-throughput experiments `r citep('10.1093/bioinformatics/bts034')`](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
 3. Normalization (Quantile normalization/TMM/etc.)
+    - [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments `r citep('10.1186/1471-2105-11-94')`](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
+    - [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis `r citep('10.1093/bib/bbs046')`](http://bib.oxfordjournals.org/content/14/6/671.short)
 4. A detailed discussion of the pros and cons of various approaches for
    differential expression analysis of RNA-Seq data.
+    - [Comparison of software packages for detecting differential expression in RNA-seq studies `r citep('10.1093/bib/bbt086')`](http://bib.oxfordjournals.org/content/16/1/59.short)
+    - [A comparison of methods for differential expression analysis of RNA-seq data `r citep('10.1186/1471-2105-14-91')`](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
 5. Parameter Optimization (Short solution: try out a few different ways of 
    preparing data, and measure network module enrichment each time.)
 6. R programming.
+    - [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
@@ -70,6 +73,9 @@ library('limma')
 library('reshape2')
 library('RColorBrewer')
 library('WGCNA')
+
+# Make sure results are reproducible
+set.seed(1)
 ```
 
 Now, let's load the sample metadata file from the `data/` directory.
@@ -113,7 +119,6 @@ gene_ids <- head(keys(Homo.sapiens, keytype='ENSEMBL'), 2)
 select(Homo.sapiens, keytype='ENSEMBL', keys=gene_ids, 
 	   columns=c('ALIAS', 'TXCHROM', 'TXSTART', 'TXEND'))
 ```
-
 
 Data Preparation
 ================
@@ -551,3 +556,16 @@ g <- export_network_to_graphml(adj_matrix, filename='~/network.graphml',
                                threshold=0.4, nodeAttrDataFrame=gene_info)
 ```
 
+References
+==========
+
+```{r results='asis', echo=FALSE}
+bibliography()
+```
+
+Version Information
+===================
+
+```{r}
+sessionInfo()
+```

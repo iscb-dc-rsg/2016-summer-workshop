@@ -1,7 +1,7 @@
-Obtaining and Analyzing Data from the The Cancer Genome Atlas Project
----------------------------------------------------------------------
+Interactive Genomic Data Analysis and Visualization using Epiviz (Methylation Data)
+-----------------------------------------------------------------------------------
 
-- **Author**: Thomas Peterson
+- **Author**: Jayaram Kancherla
 - **Date**: June 15, 2016
 
 ### Overview
