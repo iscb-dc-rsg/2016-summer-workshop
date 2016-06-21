@@ -29,6 +29,8 @@ Here are the main steps we are going to cover in this tutorial:
     -   filtering out non-differentially-expressed genes
 
 3.  Co-expression network construction
+4.  Detection of co-expression modules
+5.  Exporting a network for external visualization
 
 Things which are *not* covered in-depth in this tutorial, but warrant consideration:
 
@@ -38,23 +40,28 @@ Things which are *not* covered in-depth in this tutorial, but warrant considerat
 
 2.  Batch adjustment (ComBat/sva/RUVSeq)
     -   [SVA tutorial](https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf)
-    -   [The sva package for removing batch effects and other unwanted variation in high-throughput experiments (Leek, Johnson, Parker, et al., 2012)](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
+    -   [The sva package for removing batch effects and other unwanted variation in high-throughput experiments (Leek, Johnson, Parker, Jaffe, and Storey, 2012)](http://bioinformatics.oxfordjournals.org/content/28/6/882.short)
 
 3.  Normalization (Quantile normalization/TMM/etc.)
-    -   [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments (Bullard, Purdom, Hansen, et al., 2010)](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
-    -   [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis (Dillies, Rau, Aubert, et al., 2012)](http://bib.oxfordjournals.org/content/14/6/671.short)
+    -   [Evaluation of statistical methods for normalization and differential expression in mRNA-Seq experiments (Bullard, Purdom, Hansen, and Dudoit, 2010)](http://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-94)
+    -   [A comprehensive evaluation of normalization methods for Illumina high-throughput RNA sequencing data analysis (Dillies, Rau, Aubert, Hennequet-Antier, Jeanmougin, Servant, Keime, Marot, Castel, Estelle, Guernec, Jagla, Jouneau, Laloe, Gall, Schaeffer, Crom, Guedj, and Jaffrezic, 2012)](http://bib.oxfordjournals.org/content/14/6/671.short)
 
 4.  A detailed discussion of the pros and cons of various approaches for differential expression analysis of RNA-Seq data.
     -   [Comparison of software packages for detecting differential expression in RNA-seq studies (Seyednasrollah, Laiho, and Elo, 2013)](http://bib.oxfordjournals.org/content/16/1/59.short)
     -   [A comparison of methods for differential expression analysis of RNA-seq data (Soneson and Delorenzi, 2013)](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
 
-5.  Parameter Optimization (Short solution: try out a few different ways of preparing data, and measure network module enrichment each time.)
-6.  R programming.
+5.  Parameter Optimization
+
+-   Short solution: try out a few different ways of preparing data, and measure network module enrichment each time.
+
+1.  R programming.
     -   [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
 ### Dataset
+
+The dataset used for this tutorial comes from a dual transcriptome time-series infection study by `citet('10.1128/mBio.00027-16')`. A total of 19 samples are used, representing four time-points (4, 24, 48, and 72 hours) after infection of human donor macrophages by the kinetoplastid parasite [*Leishmania major*](https://en.wikipedia.org/wiki/Leishmania_major). A thorough description of steps used to map and count reads is provided in the original manuscript.
 
 Setup
 =====
@@ -63,13 +70,73 @@ First, let's load the libraries that we will be using for this analysis. These c
 
 ``` r
 library('gplots')
+```
+
+    ## 
+    ## Attaching package: 'gplots'
+
+    ## The following object is masked from 'package:stats':
+    ## 
+    ##     lowess
+
+``` r
 library('ggplot2')
 library('knitr')
 library('limma')
 library('reshape2')
 library('RColorBrewer')
 library('WGCNA')
+```
 
+    ## Loading required package: dynamicTreeCut
+
+    ## Loading required package: fastcluster
+
+    ## 
+    ## Attaching package: 'fastcluster'
+
+    ## The following object is masked from 'package:stats':
+    ## 
+    ##     hclust
+
+    ## 
+
+    ## ==========================================================================
+    ## *
+    ## *  Package WGCNA 1.51 loaded.
+    ## *
+    ## *    Important note: It appears that your system supports multi-threading,
+    ## *    but it is not enabled within WGCNA in R. 
+    ## *    To allow multi-threading within WGCNA with all available cores, use 
+    ## *
+    ## *          allowWGCNAThreads()
+    ## *
+    ## *    within R. Use disableWGCNAThreads() to disable threading if necessary.
+    ## *    Alternatively, set the following environment variable on your system:
+    ## *
+    ## *          ALLOW_WGCNA_THREADS=<number_of_processors>
+    ## *
+    ## *    for example 
+    ## *
+    ## *          ALLOW_WGCNA_THREADS=12
+    ## *
+    ## *    To set the environment variable in linux bash shell, type 
+    ## *
+    ## *           export ALLOW_WGCNA_THREADS=12
+    ## *
+    ## *     before running R. Other operating systems or shells will
+    ## *     have a similar command to achieve the same aim.
+    ## *
+    ## ==========================================================================
+
+    ## 
+    ## Attaching package: 'WGCNA'
+
+    ## The following object is masked from 'package:stats':
+    ## 
+    ##     cor
+
+``` r
 # Make sure results are reproducible
 set.seed(1)
 ```
@@ -147,6 +214,79 @@ For gene annotations, we can use the Bioconductor `Homo.sapiens` OrganismDb pack
 ``` r
 library('Homo.sapiens')
 ```
+
+    ## Loading required package: AnnotationDbi
+
+    ## Loading required package: stats4
+
+    ## Loading required package: BiocGenerics
+
+    ## Loading required package: parallel
+
+    ## 
+    ## Attaching package: 'BiocGenerics'
+
+    ## The following objects are masked from 'package:parallel':
+    ## 
+    ##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    ##     clusterExport, clusterMap, parApply, parCapply, parLapply,
+    ##     parLapplyLB, parRapply, parSapply, parSapplyLB
+
+    ## The following object is masked from 'package:limma':
+    ## 
+    ##     plotMA
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     IQR, mad, xtabs
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     anyDuplicated, append, as.data.frame, cbind, colnames,
+    ##     do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    ##     grepl, intersect, is.unsorted, lapply, lengths, Map, mapply,
+    ##     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    ##     Position, rank, rbind, Reduce, rownames, sapply, setdiff,
+    ##     sort, table, tapply, union, unique, unsplit
+
+    ## Loading required package: Biobase
+
+    ## Welcome to Bioconductor
+    ## 
+    ##     Vignettes contain introductory material; view with
+    ##     'browseVignettes()'. To cite Bioconductor, see
+    ##     'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+    ## Loading required package: IRanges
+
+    ## Loading required package: S4Vectors
+
+    ## 
+    ## Attaching package: 'S4Vectors'
+
+    ## The following object is masked from 'package:gplots':
+    ## 
+    ##     space
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     colMeans, colSums, expand.grid, rowMeans, rowSums
+
+    ## Loading required package: OrganismDbi
+
+    ## Loading required package: GenomicFeatures
+
+    ## Loading required package: GenomeInfoDb
+
+    ## Loading required package: GenomicRanges
+
+    ## Loading required package: GO.db
+
+    ## Loading required package: org.Hs.eg.db
+
+    ## 
+
+    ## Loading required package: TxDb.Hsapiens.UCSC.hg19.knownGene
 
 OrganismDb packages can be queried in a manner similar to querying a database. You have to specify one or more gene identifiers ('keys'), along with the type of the identifier ('key type'), and one or more fields that you are interested in querying.
 
@@ -341,6 +481,26 @@ For this, we could use any similarity metric: Pearson correlation, Biweight mid-
 
 Here, we will use a metric that I have created which combines some of the benefits from both Pearson correlation and Euclidean Distance.
 
+For a data matrix *X* with observations as columns (samples) and features for rows (genes), the feature-feature similarity matrix *S* is computed as:
+
+$$
+S = sign(cor(X)) \\times \\frac{|cor(X)| + (1 - \\frac{log(dist(X) + 1)}{max(log(dist(X) + 1))})}{2}
+$$
+
+Where the `cor` returns the Pearson correlation matrix for the input matrix, and the `dist` function returns the Euclidean distance matrix for the input matrix.
+
+The LHS of the equation is simply the sign of the correlation function, which serves to preserve the sign of the interaction. The RHS combines the Pearson correlation and the log inverse Euclidean distance with equal weights.
+
+The result is a number in the range \[ − 1, 1\], where values close to −1 indicate a strong negative correlation and values close to 1 indicate a strong positive corelation.
+
+While the Pearson correlation and Euclidean distance each contribute equally in the above equation, one could also assign tuning parameters to each of the metrics to allow for unequal contributions, e.g.:
+
+$$
+S = sign(cor(X)) \\times (\\alpha |cor(X)| + \\beta (1 - \\frac{log(dist(X) + 1)}{max(log(dist(X) + 1))}))
+$$
+
+Where *α* and *β* each range from \[0, 1\] and sum to 1.
+
 ``` r
 #'
 #' Similarity measure which combines elements from Pearson correlation and
@@ -407,9 +567,9 @@ rm(sim_matrix)
 gc()
 ```
 
-    ##            used  (Mb) gc trigger  (Mb)  max used  (Mb)
-    ## Ncells  4405528 235.3    6861544 366.5   6861544 366.5
-    ## Vcells 15772993 120.4   76467628 583.5 101664953 775.7
+    ##            used  (Mb) gc trigger  (Mb) max used  (Mb)
+    ## Ncells  4357989 232.8    6861544 366.5  6861544 366.5
+    ## Vcells 15641434 119.4   69040500 526.8 77127451 588.5
 
 ``` r
 # Convert to matrix
@@ -543,7 +703,7 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
     # Remove edges with weights lower than the cutoff
     adj_mat[abs(adj_mat) < threshold] <- 0
 
-    # Drop any genes with no edges (TODO: Make optional?)
+    # Drop any genes with no edges (TODO: Make optional)
     orphaned <- (colSums(adj_mat) == 0)
     adj_mat <- adj_mat[!orphaned, !orphaned]
 
@@ -589,12 +749,6 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
         }
     }
 
-    # TODO 2014/06/14
-    # Add support for setting edge attributes...
-    # Convert matrix of edge annotations to a list of edge pairs and values
-    #x <- as.data.frame(as.table(diff))
-    #E(gD)[as.character(dataSet.ext$V1) %--% as.character(dataSet.ext$V2)]$weight <- as.numeric(dataSet.ext$V3)
-    #E(gD)[as.character(dataSet.ext$V1) %--% as.character(dataSet.ext$V2)]$similarity <- as.numeric(dataSet.ext$V4)
     edge_correlation_negative <- c()
 
     # neg_correlations[edge_list]
@@ -605,8 +759,6 @@ export_network_to_graphml <- function (adj_mat, filename=NULL, weighted=TRUE,
         to   <- edge_list[i, 2]    
     }
     
-    # Apply threshold
-
     # Save graph to a file
     write.graph(g, filename, format='graphml')
 
@@ -640,6 +792,33 @@ gene_info$color_rgb <- col2hex(gene_info$module)
 g <- export_network_to_graphml(adj_matrix, filename='~/network.graphml',
                                threshold=0.4, nodeAttrDataFrame=gene_info)
 ```
+
+    ## 
+    ## Attaching package: 'igraph'
+
+    ## The following object is masked from 'package:GenomicRanges':
+    ## 
+    ##     union
+
+    ## The following objects are masked from 'package:IRanges':
+    ## 
+    ##     simplify, union
+
+    ## The following objects are masked from 'package:S4Vectors':
+    ## 
+    ##     compare, union
+
+    ## The following objects are masked from 'package:BiocGenerics':
+    ## 
+    ##     normalize, union
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     decompose, spectrum
+
+    ## The following object is masked from 'package:base':
+    ## 
+    ##     union
 
 References
 ==========
@@ -685,11 +864,11 @@ sessionInfo()
     ##  [5] GO.db_3.3.0                            
     ##  [6] OrganismDbi_1.14.1                     
     ##  [7] GenomicFeatures_1.24.2                 
-    ##  [8] GenomicRanges_1.24.0                   
+    ##  [8] GenomicRanges_1.24.1                   
     ##  [9] GenomeInfoDb_1.8.1                     
-    ## [10] AnnotationDbi_1.34.2                   
+    ## [10] AnnotationDbi_1.34.3                   
     ## [11] IRanges_2.6.0                          
-    ## [12] S4Vectors_0.10.0                       
+    ## [12] S4Vectors_0.10.1                       
     ## [13] Biobase_2.32.0                         
     ## [14] BiocGenerics_0.18.0                    
     ## [15] WGCNA_1.51                             
@@ -701,11 +880,10 @@ sessionInfo()
     ## [21] ggplot2_2.1.0                          
     ## [22] gplots_3.0.1                           
     ## [23] knitcitations_1.0.7                    
-    ## [24] knitr_1.13.1                           
+    ## [24] knitr_1.13                             
     ## [25] rmarkdown_0.9.6                        
-    ## [26] nvimcom_0.9-16                         
-    ## [27] setwidth_1.0-4                         
-    ## [28] colorout_1.1-0                         
+    ## [26] setwidth_1.0-4                         
+    ## [27] colorout_1.1-1                         
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] httr_1.1.0                 splines_3.3.0             
@@ -723,7 +901,7 @@ sessionInfo()
     ## [25] biomaRt_2.28.0             zlibbioc_1.18.0           
     ## [27] scales_0.4.0               gdata_2.17.0              
     ## [29] BiocParallel_1.6.2         SummarizedExperiment_1.2.2
-    ## [31] nnet_7.3-12                survival_2.39-2           
+    ## [31] nnet_7.3-12                survival_2.39-4           
     ## [33] RJSONIO_1.3-0              magrittr_1.5              
     ## [35] evaluate_0.9               doParallel_1.0.10         
     ## [37] foreign_0.8-66             graph_1.50.0              
@@ -731,12 +909,12 @@ sessionInfo()
     ## [41] data.table_1.9.6           formatR_1.4               
     ## [43] matrixStats_0.50.2         stringr_1.0.0             
     ## [45] munsell_0.4.3              cluster_2.0.4             
-    ## [47] Biostrings_2.40.0          caTools_1.17.1            
+    ## [47] Biostrings_2.40.1          caTools_1.17.1            
     ## [49] grid_3.3.0                 RCurl_1.95-4.8            
     ## [51] iterators_1.0.8            labeling_0.3              
     ## [53] bitops_1.0-6               gtable_0.2.0              
     ## [55] codetools_0.2-14           DBI_0.4-1                 
-    ## [57] R6_2.1.2                   GenomicAlignments_1.8.0   
+    ## [57] R6_2.1.2                   GenomicAlignments_1.8.1   
     ## [59] gridExtra_2.2.1            lubridate_1.5.6           
     ## [61] rtracklayer_1.32.0         Hmisc_3.17-4              
     ## [63] KernSmooth_2.23-15         stringi_1.1.1             

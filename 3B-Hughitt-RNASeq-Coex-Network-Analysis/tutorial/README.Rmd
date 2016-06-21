@@ -51,14 +51,25 @@ consideration:
    differential expression analysis of RNA-Seq data.
     - [Comparison of software packages for detecting differential expression in RNA-seq studies `r citep('10.1093/bib/bbt086')`](http://bib.oxfordjournals.org/content/16/1/59.short)
     - [A comparison of methods for differential expression analysis of RNA-seq data `r citep('10.1186/1471-2105-14-91')`](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-91)
-5. Parameter Optimization (Short solution: try out a few different ways of 
-   preparing data, and measure network module enrichment each time.)
+5. Parameter Optimization
+   - Short solution: try out a few different ways of preparing data, and
+     measure network module enrichment each time.
 6. R programming.
     - [Coursera - R programming](https://www.coursera.org/learn/r-programming)
 
 ### Installation and Usage
 
+
+
 ### Dataset
+
+The dataset used for this tutorial comes from a dual transcriptome time-series
+infection study by `citet('10.1128/mBio.00027-16')`. A total of 19 samples are
+used, representing four time-points (4, 24, 48, and 72 hours) after infection
+of human donor macrophages by the kinetoplastid parasite 
+[*Leishmania major*](https://en.wikipedia.org/wiki/Leishmania_major). A
+thorough description of steps used to map and count reads is provided in the
+original manuscript.
 
 Setup
 =====
