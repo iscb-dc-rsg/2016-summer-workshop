@@ -10,3 +10,4 @@ Workshop presentation discussing the basics of bacterial genome sequences, assem
 
 - **Presentation**: PDF File in this folder, Video available on Youtube at [https://youtu.be/WhcqfHP94Fo](https://www.youtube.com/watch?v=WhcqfHP94Fo)
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/WhcqfHP94Fo" frameborder="0" allowfullscreen></iframe>
