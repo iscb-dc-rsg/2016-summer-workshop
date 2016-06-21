@@ -18,6 +18,7 @@ then applies some of these principles using a real dataset containing ~3000
 genes, after filtering.
 
 - **Presentation**: [http://khughitt.github.io/2016-iscb-dc-rsg-workshop-presentation/](http://khughitt.github.io/2016-iscb-dc-rsg-workshop-presentation/#1) 
+- **Video**: [https://www.youtube.com/watch?v=OdqDE5EJSlA](https://www.youtube.com/watch?v=OdqDE5EJSlA)
 - **Tutorial**: [tutorial/README.md](https://github.com/iscb-dc-rsg/2016-summer-workshop/blob/master/3B-Hughitt-RNASeq-Coex-Network-Analysis/tutorial/README.md)
 - **Data**:
     - Files
