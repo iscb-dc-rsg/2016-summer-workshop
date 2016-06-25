@@ -8,7 +8,8 @@ Interactive Genomic Data Analysis and Visualization using Epiviz (Methylation Da
 
 Brief description on presentation...
 
-- **Presentation**: _link to follow_
+- **Presentation**: [epiviz-slides.pdf]()
+- **Tutorial**: [tutorial/IntroToEpivizr.Rmd]()
 
 ### Data/Code
 

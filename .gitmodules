@@ -1,0 +1,3 @@
+[submodule "3A-Kancherla-Epiviz-Genome-Visualization/tutorial"]
+	path = 3A-Kancherla-Epiviz-Genome-Visualization/tutorial
+	url = https://github.com/HCBravoLab/ISCB_DC_workshop
