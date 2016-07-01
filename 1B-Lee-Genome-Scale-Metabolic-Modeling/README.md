@@ -3,14 +3,6 @@ Genome-scale metabolic modeling
 
 - **Author**: Joo Sang Lee
 - **Date**: June 15, 2016
+- **Presentation**: [GSMM.pptx](GSMM.pptx)
+- **Data**: [Recon2.v04.mat](Recon2.v04.mat)
 
-### Overview
-
-Brief description on presentation...
-
-- **Presentation**: _link to follow_
-
-### Data/Code
-
-Information about data/code goes here - can include information about data
-source, and how to use any code examples provided in the repo.
